@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:projeto_retorno/controllers/acesso_controller.dart';
+import 'package:projeto_retorno/models/usuario.dart';
 import 'package:projeto_retorno/screens/home_screen.dart';
 import 'package:projeto_retorno/screens/login_screen.dart';
 import 'package:projeto_retorno/themes/app_theme.dart';
@@ -12,7 +14,8 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
   ThemeMode temaAtual = ThemeMode.light;
-  bool logado = false;
+  final acesso = AcessoController();
+  Usuario? usuario;
 
   void alterarTema() {
     setState(() {
@@ -22,10 +25,13 @@ class _SplashScreenState extends State<SplashScreen> {
     });
   }
 
-  void fazerLogin() {
-    setState(() {
-      logado = true;
-    });
+  void fazerLogin(Usuario novoUsuario) {
+    setState(() => usuario = novoUsuario);
+  }
+
+  Future<void> sair() async {
+    await acesso.sair();
+    if (mounted) setState(() => usuario = null);
   }
 
   @override
@@ -34,9 +40,14 @@ class _SplashScreenState extends State<SplashScreen> {
       theme: AppTheme.lightTheme(),
       darkTheme: AppTheme.darkTheme(),
       themeMode: temaAtual,
-      home: logado
-          ? HomeScreen(alterarTema: alterarTema) // se logado for true
-          : LoginScreen(aoLogar: fazerLogin), // se logado for false
+      home: usuario == null
+          ? LoginScreen(acesso: acesso, aoLogar: fazerLogin)
+          : HomeScreen(
+              api: acesso.api,
+              usuario: usuario!,
+              alterarTema: alterarTema,
+              sair: sair,
+            ),
     );
   }
 }
